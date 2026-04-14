@@ -1,7 +1,6 @@
-import { useState, useReducer, useEffect } from "react";
-import UploadForm from "./components/UploadForm";
-import Navbar from './components/Navbar';
+import { useState, useReducer, useEffect, useMemo } from "react";
 import Card from './components/Card';
+import Layout from "./components/Layout";
 
 const photos = [
   "https://images.unsplash.com/photo-1492724441997-5dc865305da7?auto=format&fit=crop&w=800&q=80",
@@ -44,7 +43,9 @@ function reducer(state, action){
     case 'setItem':
       return{
         ...state,
-        items: [state.inputs, ...state.items]
+        items: [state.inputs, ...state.items],
+        count: state.items.length + 1,
+        inputs: { title: "", file: null, path: null }
       }
     case "setInputs":
       return{
@@ -65,17 +66,16 @@ function reducer(state, action){
 function App() {
 
   const [state, dispatch] = useReducer(reducer, intialState)
-  const [count, setCount] = useState()
   const toggle = (bool) => dispatch({type: 'collapse', payload: {bool} })
+
+  const count = useMemo(() => {
+    return `You have ${state.items.length} image${state.items.length > 1 ? 's' : ''}`
+  }, [state.items])
 
   useEffect(() =>{
     console.log(state)
   }, [state])
 
-
-  useEffect(() => {
-    setCount(`You have ${state.items.length} image${state.items.length > 1 ? 's' : ''}`)
-  }, [state])
 
   const handleOnChange = (state, e) => dispatch({type: 'setInput', payload:{value: e}})
 
@@ -89,32 +89,25 @@ function App() {
 
 
   return (
-    <div className="container text-center">
-      <Navbar />
-      <div className="container text-center mt-5">
-        <button className="btn btn-success float" onClick={() => toggle(!state.isCollapsed)}>
-          {state.isCollapsed ? "CLOSE" : "+ ADD AN IMAGE"}
-        </button>
-        <UploadForm 
-          //Passing Handle Functions and State as Props 
-          inputs={state.inputs}
-          isVisible={state.isCollapsed}
-          onChange={handleOnChange}
-          onSubmit={handleOnSubmit}
-          value={state.inputs}
-        />
+    <Layout
+      state={state}
+      onChange={handleOnChange}
+      onSubmit={handleOnChange}
+      toggle={toggle}
+    >
+     <div className="container text-center">
         <h1 className="mt-5 mb-4">Gallery</h1>
         
         {/* Display the count */}
         <p className="mb-3 text-muted">{count}</p>
         
         <div className="row justify-content-center g-4">
-          {state.items.map((photo, index) => (
-            <Card key={`${photo}-${index}`} image={photo} />
+          {state.items.map((item, index) => (
+            <Card key={index}{...item} />
           ))}
         </div>
       </div>
-    </div>
+    </Layout>
   );
 }
 
